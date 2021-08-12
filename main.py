@@ -25,9 +25,11 @@ def main():
             page = get_page()
             result = check_data(page)
             if result is not None:
-                message = '\n'.join(result)
-                bot.send_message(chat_id, message)
-                print('Text has been changed:\n' + message)
+                if isinstance(result, list):
+                    result = '\n'.join(result)
+                result = 'Text has been changed:\n' + result
+                bot.send_message(chat_id, result)
+                print(result)
 
         except Exception as e:
             print(e)
@@ -59,7 +61,7 @@ def check_data(page):
 
             if last_page_text == '':
                 last_page_text = page.text
-            elif last_page_text != page.text:
+            else:
                 result = compare_text(last_page_text, page.text)
                 last_page_text = page.text
                 return result
@@ -67,27 +69,31 @@ def check_data(page):
 
 
 def compare_text(old_text, new_text):
-    new_text = new_text.split('\n')
-    old_text = old_text.split('\n')
-    result = list()
+    try:
+        new_text = new_text.split('\n')
+        old_text = old_text.split('\n')
+        result = list()
 
-    for n in new_text:
+        for n in new_text:
+            for o in old_text:
+                if n == o:
+                    result.append(n)
+                    old_text.remove(o)
+                    break
+        for f in result:
+            new_text.remove(f)
+
+        result.clear()
+
         for o in old_text:
-            if n == o:
-                result.append(n)
-                break
-    for f in result:
-        new_text.remove(f)
-        old_text.remove(f)
+            result.append(f'- {o}')
+        for n in new_text:
+            result.append(f'+ {n}')
 
-    result.clear()
+        return result
 
-    for o in old_text:
-        result.append(f'- {o}')
-    for n in new_text:
-        result.append(f'+ {n}')
-
-    return result
+    except Exception as e:
+        return str(e)
 
 
 if __name__ == '__main__':
