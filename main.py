@@ -1,7 +1,7 @@
 import psycopg2
 import requests as req
 import hashlib
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Comment
 import os
 import time
 import telebot
@@ -70,6 +70,8 @@ def get_page(info):
     result = req.get(info[PAGE_URL], headers=headers, timeout=timeout)
     if result.status_code == req.codes.ok:
         soup = BeautifulSoup(result.text, "html.parser")
+        for comments in soup.findAll(text=lambda text: isinstance(text, Comment)):
+            comments.extract()
         page = soup.select(info[PAGE_SELECTOR])
         page = '\n'.join([str(item) for item in page])
         return page
